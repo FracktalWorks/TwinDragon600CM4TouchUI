@@ -351,6 +351,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.setNewToolZOffsetFromCurrentZBool = False
             self.setActiveExtruder(0)
 
+            self.dialog_doorlock = None
             self.dialog_filamentsensor = None
 
             for spinbox in self.findChildren(QtWidgets.QSpinBox):
@@ -421,6 +422,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         self.menuButton.pressed.connect(lambda: self.stackedWidget.setCurrentWidget(self.MenuPage))
         self.controlButton.pressed.connect(self.control)
         self.playPauseButton.clicked.connect(self.playPauseAction)
+        self.doorLockButton.clicked.connect(self.doorLock)
 
         # MenuScreen
         self.menuBackButton.pressed.connect(lambda: self.stackedWidget.setCurrentWidget(self.homePage))
@@ -749,8 +751,8 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
 
             triggered_extruder0 = False
             triggered_extruder1 = False
-            # triggered_door = False
-            # pause_print = False
+            triggered_door = False
+            pause_print = False
 
             if 'extruder0' in data:
                 triggered_extruder0 = True
@@ -758,10 +760,10 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             if 'extruder1' in data:
                 triggered_extruder1 = True
 
-            # if 'door' in data:
-            #     triggered_door = data["door"] == 0
-            # if 'pause_print' in data:
-            #     pause_print = data["pause_print"]
+            if 'door' in data:
+                triggered_door = data["door"] == 0
+            if 'pause_print' in data:
+                pause_print = data["pause_print"]
 
             if triggered_extruder0 and self.stackedWidget.currentWidget() not in [self.changeFilamentPage, self.changeFilamentProgressPage,
                                     self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage]:
@@ -773,21 +775,74 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
                 if dialog.WarningOk(self, "Filament outage in Extruder 1"):
                     pass
 
-            # if triggered_door:
-            #     if self.printerStatusText == "Printing":
-            #         no_pause_pages = [self.controlPage, self.changeFilamentPage, self.changeFilamentProgressPage,
-            #                           self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage,]
-            #         if not pause_print or self.stackedWidget.currentWidget() in no_pause_pages:
-            #             if dialog.WarningOk(self, "Door opened"):
-            #                 return
-            #         octopiclient.pausePrint()
-            #         if dialog.WarningOk(self, "Door opened. Print paused.", overlay=True):
-            #             return
-            #     else:
-            #         if dialog.WarningOk(self, "Door opened"):
-            #             return
+            if triggered_door:
+                if self.printerStatusText == "Printing":
+                    no_pause_pages = [self.controlPage, self.changeFilamentPage, self.changeFilamentProgressPage,
+                                      self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage,]
+                    if not pause_print or self.stackedWidget.currentWidget() in no_pause_pages:
+                        if dialog.WarningOk(self, "Door opened"):
+                            return
+                    octopiclient.pausePrint()
+                    if dialog.WarningOk(self, "Door opened. Print paused.", overlay=True):
+                        return
+                else:
+                    if dialog.WarningOk(self, "Door opened"):
+                        return
         except Exception as e:
             print(e)
+
+    ''' +++++++++++++++++++++++++++  +++++++++++++++++++++++++++++++++++++ '''
+
+    def doorLock(self):
+        '''
+        function that toggles locking and unlocking the front door
+        :return:
+        '''
+        octopiclient.overrideDoorLock()
+
+    def doorLockMsg(self, data):
+        if "msg" not in data:
+            return
+
+        msg = data["msg"]
+
+        if self.dialog_doorlock:
+            self.dialog_doorlock.close()
+            self.dialog_doorlock = None
+
+        if msg is not None:
+            self.dialog_doorlock = dialog.dialog(self, msg, icon="exclamation-mark.png")
+            if self.dialog_doorlock.exec_() == QtGui.QMessageBox.Ok:
+                self.dialog_doorlock = None
+                return
+
+    def doorLockHandler(self, data):
+        door_lock_disabled = False
+        door_lock = False
+        # door_sensor = False
+        # door_lock_override = False
+
+        if 'door_lock' in data:
+            door_lock_disabled = data["door_lock"] == "disabled"
+            door_lock = data["door_lock"] == 1
+        # if 'door_sensor' in data:
+        #     door_sensor = data["door_sensor"] == 1
+        # if 'door_lock_override' in data:
+        #     door_lock_override = data["door_lock_override"] == 1
+
+        # if self.dialog_doorlock:
+        #     self.dialog_doorlock.close()
+        #     self.dialog_doorlock = None
+
+        self.doorLockButton.setVisible(not door_lock_disabled)
+        if not door_lock_disabled:
+            # self.doorLockButton.setChecked(not door_lock)
+            self.doorLockButton.setText('Lock Door' if not door_lock else 'Unlock Door')
+
+            icon = 'doorLock' if not door_lock else 'doorUnlock'
+            self.doorLockButton.setIcon(QtGui.QIcon(_fromUtf8("templates/img/" + icon + ".png")))
+        else:
+            return
 
     ''' +++++++++++++++++++++++++++ Firmware Update+++++++++++++++++++++++++++++++++++ '''
 
@@ -1674,6 +1729,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.changeFilamentButton.setDisabled(True)
             self.menuCalibrateButton.setDisabled(True)
             self.menuPrintButton.setDisabled(True)
+            self.doorLockButton.setDisabled(False)
             # if not self.__timelapse_enabled:
             #     octopiclient.cancelPrint()
             #     self.coolDownAction()
@@ -1685,6 +1741,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.changeFilamentButton.setDisabled(False)
             self.menuCalibrateButton.setDisabled(True)
             self.menuPrintButton.setDisabled(True)
+            self.doorLockButton.setDisabled(True)
 
         else:
             self.stopButton.setDisabled(True)
@@ -1693,6 +1750,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.changeFilamentButton.setDisabled(False)
             self.menuCalibrateButton.setDisabled(False)
             self.menuPrintButton.setDisabled(False)
+            self.doorLockButton.setDisabled(True)
 
     ''' ++++++++++++++++++++++++++++Active Extruder/Tool Change++++++++++++++++++++++++ '''
 
