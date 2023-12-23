@@ -793,12 +793,13 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
 
     ''' +++++++++++++++++++++++++++  +++++++++++++++++++++++++++++++++++++ '''
 
-    def doorLock(self):
+
+    def doorLock(self, data):
         '''
-        function that toggles locking and unlocking the front door
+        Function that toggles locking and unlocking the front door based on the door status
         :return:
         '''
-        octopiclient.overrideDoorLock()
+        octopiclient.gcode(command='DoorToggle')
 
     def doorLockMsg(self, data):
         if "msg" not in data:
@@ -1743,6 +1744,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.menuPrintButton.setDisabled(True)
             self.doorLockButton.setDisabled(True)
 
+
         else:
             self.stopButton.setDisabled(True)
             self.playPauseButton.setChecked(False)
@@ -1967,6 +1969,8 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         self.toolOffsetXDoubleSpinBox.setValue(float(self.toolOffsetX))
         self.toolOffsetYDoubleSpinBox.setValue(float(self.toolOffsetY))
         self.toolOffsetZDoubleSpinBox.setValue(float(self.toolOffsetZ))
+
+    
 
     def quickStep1(self):
         '''
