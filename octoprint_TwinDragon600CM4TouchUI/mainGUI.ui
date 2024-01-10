@@ -176,7 +176,7 @@ QStatusBar::item {
 background-color: rgb(40, 40, 40);</string>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>17</number>
     </property>
     <widget class="QWidget" name="loadingPage">
      <widget class="QLabel" name="LoadingLabel">
@@ -2072,7 +2072,7 @@ QScrollBar::down-arrow:vertical {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>296</width>
+         <width>778</width>
          <height>900</height>
         </rect>
        </property>
@@ -6870,7 +6870,7 @@ QDoubleSpinBox::down-button:pressed {
        <number>2</number>
       </property>
       <property name="minimum">
-       <double>-10.000000000000000</double>
+       <double>-50.000000000000000</double>
       </property>
       <property name="maximum">
        <double>50.000000000000000</double>
@@ -7267,16 +7267,16 @@ QDoubleSpinBox::down-button:pressed {
        <number>2</number>
       </property>
       <property name="minimum">
-       <double>-6.000000000000000</double>
-      </property>
-      <property name="maximum">
        <double>-2.000000000000000</double>
       </property>
+      <property name="maximum">
+       <double>2.000000000000000</double>
+      </property>
       <property name="singleStep">
-       <double>0.050000000000000</double>
+       <double>0.025000000000000</double>
       </property>
       <property name="value">
-       <double>-4.000000000000000</double>
+       <double>0.000000000000000</double>
       </property>
      </widget>
      <widget class="QLabel" name="tollOffsetXLabel_2">
