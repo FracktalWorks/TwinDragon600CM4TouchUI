@@ -107,10 +107,10 @@ filaments = [
 filaments = OrderedDict(filaments)
 
 #values before 2020 changes
-calibrationPosition = {'X1': 105, 'Y1': 3,
-                       'X2': 507, 'Y2': 3,
-                       'X3': 304, 'Y3': 267,
-                       'X4': 304, 'Y4': 127
+calibrationPosition = {'X1': 110, 'Y1': 18,
+                       'X2': 510, 'Y2': 18,
+                       'X3': 310, 'Y3': 308,
+                       'X4': 310, 'Y4': 178
                        }
 
 # calibrationPosition = {'X1': 336, 'Y1': 33,
@@ -315,7 +315,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         if not Development:
             formatter = logging.Formatter("%(asctime)s %(message)s")
             self._logger = logging.getLogger("TouchUI")
-            file_handler = logging.FileHandler("/home/biqu/ui.log")
+            file_handler = logging.FileHandler("/home/pi/ui.log")
             file_handler.setFormatter(formatter)
             stream_handler = logging.StreamHandler()
             stream_handler.setFormatter(formatter)
@@ -351,6 +351,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.setNewToolZOffsetFromCurrentZBool = False
             self.setActiveExtruder(0)
 
+            self.dialog_doorlock = None
             self.dialog_filamentsensor = None
 
             for spinbox in self.findChildren(QtWidgets.QSpinBox):
@@ -474,10 +475,10 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
 
         print('Unable to connect to Octoprint Server')
         if dialog.WarningYesNo(self,  "Server Error, Restore failsafe settings?", overlay=True):
-            os.system('sudo rm -rf /home/biqu/.octoprint/users.yaml')
-            os.system('sudo rm -rf /home/biqu/.octoprint/config.yaml')
-            os.system('sudo cp -f config/users.yaml /home/biqu/.octoprint/users.yaml')
-            os.system('sudo cp -f config/config.yaml /home/biqu/.octoprint/config.yaml')
+            os.system('sudo rm -rf /home/pi/.octoprint/users.yaml')
+            os.system('sudo rm -rf /home/pi/.octoprint/config.yaml')
+            os.system('sudo cp -f config/users.yaml /home/pi/.octoprint/users.yaml')
+            os.system('sudo cp -f config/config.yaml /home/pi/.octoprint/config.yaml')
             subprocess.call(["sudo", "systemctl", "restart", "octoprint"])
             self.sanityCheck.start()
         else:
@@ -540,6 +541,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         self.menuButton.pressed.connect(lambda: self.stackedWidget.setCurrentWidget(self.MenuPage))
         self.controlButton.pressed.connect(self.control)
         self.playPauseButton.clicked.connect(self.playPauseAction)
+        self.doorLockButton.clicked.connect(self.doorLock)
 
         # MenuScreen
         self.menuBackButton.pressed.connect(lambda: self.stackedWidget.setCurrentWidget(self.homePage))
@@ -870,6 +872,8 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             triggered_extruder1 = False
             # triggered_door = False
             # pause_print = False
+            triggered_door = False
+            pause_print = False
 
             if 'extruder0' in data:
                 triggered_extruder0 = True
@@ -881,6 +885,11 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             #     triggered_door = data["door"] == 0
             # if 'pause_print' in data:
             #     pause_print = data["pause_print"]
+                
+            if 'door' in data:
+                triggered_door = data["door"] == 0
+            if 'pause_print' in data:
+                pause_print = data["pause_print"]
 
             if triggered_extruder0 and self.stackedWidget.currentWidget() not in [self.changeFilamentPage, self.changeFilamentProgressPage,
                                     self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage]:
@@ -905,8 +914,76 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             #     else:
             #         if dialog.WarningOk(self, "Door opened"):
             #             return
+            if triggered_door:
+                if self.printerStatusText == "Printing":
+                    no_pause_pages = [self.controlPage, self.changeFilamentPage, self.changeFilamentProgressPage,
+                                      self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage,]
+                    if not pause_print or self.stackedWidget.currentWidget() in no_pause_pages:
+                        if dialog.WarningOk(self, "Door opened"):
+                            return
+                    octopiclient.pausePrint()
+                    if dialog.WarningOk(self, "Door opened. Print paused.", overlay=True):
+                        return
+                else:
+                    if dialog.WarningOk(self, "Door opened"):
+                        return
         except Exception as e:
             print(e)
+
+																			  
+
+''' +++++++++++++++++++++++++++  +++++++++++++++++++++++++++++++++++++ '''
+
+    def doorLock(self):
+        '''
+        function that toggles locking and unlocking the front door
+        :return:
+        '''
+        octopiclient.gcode(command='DoorToggle')
+
+    def doorLockMsg(self, data):
+        if "msg" not in data:
+            return
+
+        msg = data["msg"]
+
+        if self.dialog_doorlock:
+            self.dialog_doorlock.close()
+            self.dialog_doorlock = None
+
+        if msg is not None:
+            self.dialog_doorlock = dialog.dialog(self, msg, icon="exclamation-mark.png")
+            if self.dialog_doorlock.exec_() == QtGui.QMessageBox.Ok:
+                self.dialog_doorlock = None
+                return
+
+    def doorLockHandler(self, data):
+        door_lock_disabled = False
+        door_lock = False
+        # door_sensor = False
+        # door_lock_override = False
+
+        if 'door_lock' in data:
+            door_lock_disabled = data["door_lock"] == "disabled"
+            door_lock = data["door_lock"] == 1
+        # if 'door_sensor' in data:
+        #     door_sensor = data["door_sensor"] == 1
+        # if 'door_lock_override' in data:
+        #     door_lock_override = data["door_lock_override"] == 1
+
+        # if self.dialog_doorlock:
+        #     self.dialog_doorlock.close()
+        #     self.dialog_doorlock = None
+
+        self.doorLockButton.setVisible(not door_lock_disabled)
+        if not door_lock_disabled:
+            # self.doorLockButton.setChecked(not door_lock)
+            self.doorLockButton.setText('Lock Door' if not door_lock else 'Unlock Door')
+
+            icon = 'doorLock' if not door_lock else 'doorUnlock'
+            self.doorLockButton.setIcon(QtGui.QIcon(_fromUtf8("templates/img/" + icon + ".png")))
+        else:
+            return
 
     ''' +++++++++++++++++++++++++++ Firmware Update+++++++++++++++++++++++++++++++++++ '''
 
@@ -1269,7 +1346,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
     ''' ++++++++++++++++++++++++++++++++Display Settings+++++++++++++++++++++++++++++++ '''
 
     def touchCalibration(self):
-        #os.system('sudo /home/biqu/setenv.sh')
+        #os.system('sudo /home/pi/setenv.sh')
         os.system('sudo su')
         os.system('export TSLIB_TSDEVICE=/dev/input/event0')
         os.system('export TSLIB_FBDEVICE=/dev/fb0')
@@ -1406,8 +1483,9 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         octopiclient.gcode("G1 E300 F2000")
         octopiclient.gcode("G1 E300 F2000")
         octopiclient.gcode("G1 E300 F2000")
-        octopiclient.gcode("G1 E400 F2000")
+        octopiclient.gcode("G1 E300 F2000")
         octopiclient.gcode("G1 E500 F1000")
+        octopiclient.gcode("G1 E300 F1000")
         octopiclient.gcode("G90")
         while self.stackedWidget.currentWidget() == self.changeFilamentExtrudePage:
             octopiclient.gcode("G91")
@@ -1430,6 +1508,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         octopiclient.gcode("G1 E-300 F2000")
         octopiclient.gcode("G1 E-400 F2000")
         octopiclient.gcode("G1 E-400 F2000")
+											
         octopiclient.gcode("G90")
         while self.stackedWidget.currentWidget() == self.changeFilamentRetractPage:
             octopiclient.gcode("G91")
@@ -1454,6 +1533,24 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         self.firmwareUpdateCheck()
         self.coolDownAction()
         self.control()
+
+										
+		   
+																												
+		   
+											  
+								  
+							 
+							 
+
+										
+		   
+																												
+		   
+											  
+								  
+							 
+					  
 
     ''' +++++++++++++++++++++++++++++++++Job Operations+++++++++++++++++++++++++++++++ '''
 
@@ -1633,42 +1730,45 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         runs at 1HZ, so do things that need to be constantly updated only. This also controls the cooling fan depending on the temperatures
         :param temperature: dict containing key:value pairs with keys being the tools, bed and their values being their corresponding temperratures
         '''
+        try:
+            if temperature['tool0Target'] == 0:
+                self.tool0TempBar.setMaximum(300)
+                self.tool0TempBar.setStyleSheet(styles.bar_heater_cold)
+            elif temperature['tool0Actual'] <= temperature['tool0Target']:
+                self.tool0TempBar.setMaximum(temperature['tool0Target'])
+                self.tool0TempBar.setStyleSheet(styles.bar_heater_heating)
+            else:
+                self.tool0TempBar.setMaximum(temperature['tool0Actual'])
+            self.tool0TempBar.setValue(temperature['tool0Actual'])
+            self.tool0ActualTemperature.setText(str(int(temperature['tool0Actual'])))  # + unichr(176)
+            self.tool0TargetTemperature.setText(str(int(temperature['tool0Target'])))
 
-        if temperature['tool0Target'] == 0:
-            self.tool0TempBar.setMaximum(300)
-            self.tool0TempBar.setStyleSheet(styles.bar_heater_cold)
-        elif temperature['tool0Actual'] <= temperature['tool0Target']:
-            self.tool0TempBar.setMaximum(temperature['tool0Target'])
-            self.tool0TempBar.setStyleSheet(styles.bar_heater_heating)
-        else:
-            self.tool0TempBar.setMaximum(temperature['tool0Actual'])
-        self.tool0TempBar.setValue(temperature['tool0Actual'])
-        self.tool0ActualTemperature.setText(str(int(temperature['tool0Actual'])))  # + unichr(176)
-        self.tool0TargetTemperature.setText(str(int(temperature['tool0Target'])))
+            if temperature['tool1Target'] == 0:
+                self.tool1TempBar.setMaximum(300)
+                self.tool1TempBar.setStyleSheet(styles.bar_heater_cold)
+            elif temperature['tool1Actual'] <= temperature['tool1Target']:
+                self.tool1TempBar.setMaximum(temperature['tool1Target'])
+                self.tool1TempBar.setStyleSheet(styles.bar_heater_heating)
+            else:
+                self.tool1TempBar.setMaximum(temperature['tool1Actual'])
+            self.tool1TempBar.setValue(temperature['tool1Actual'])
+            self.tool1ActualTemperature.setText(str(int(temperature['tool1Actual'])))  # + unichr(176)
+            self.tool1TargetTemperature.setText(str(int(temperature['tool1Target'])))
 
-        if temperature['tool1Target'] == 0:
-            self.tool1TempBar.setMaximum(300)
-            self.tool1TempBar.setStyleSheet(styles.bar_heater_cold)
-        elif temperature['tool1Actual'] <= temperature['tool1Target']:
-            self.tool1TempBar.setMaximum(temperature['tool1Target'])
-            self.tool1TempBar.setStyleSheet(styles.bar_heater_heating)
-        else:
-            self.tool1TempBar.setMaximum(temperature['tool1Actual'])
-        self.tool1TempBar.setValue(temperature['tool1Actual'])
-        self.tool1ActualTemperature.setText(str(int(temperature['tool1Actual'])))  # + unichr(176)
-        self.tool1TargetTemperature.setText(str(int(temperature['tool1Target'])))
+            if temperature['bedTarget'] == 0:
+                self.bedTempBar.setMaximum(150)
+                self.bedTempBar.setStyleSheet(styles.bar_heater_cold)
+            elif temperature['bedActual'] <= temperature['bedTarget']:
+                self.bedTempBar.setMaximum(temperature['bedTarget'])
+                self.bedTempBar.setStyleSheet(styles.bar_heater_heating)
+            else:
+                self.bedTempBar.setMaximum(temperature['bedActual'])
+            self.bedTempBar.setValue(temperature['bedActual'])
+            self.bedActualTemperatute.setText(str(int(temperature['bedActual'])))  # + unichr(176))
+            self.bedTargetTemperature.setText(str(int(temperature['bedTarget'])))  # + unichr(176))
 
-        if temperature['bedTarget'] == 0:
-            self.bedTempBar.setMaximum(150)
-            self.bedTempBar.setStyleSheet(styles.bar_heater_cold)
-        elif temperature['bedActual'] <= temperature['bedTarget']:
-            self.bedTempBar.setMaximum(temperature['bedTarget'])
-            self.bedTempBar.setStyleSheet(styles.bar_heater_heating)
-        else:
-            self.bedTempBar.setMaximum(temperature['bedActual'])
-        self.bedTempBar.setValue(temperature['bedActual'])
-        self.bedActualTemperatute.setText(str(int(temperature['bedActual'])))  # + unichr(176))
-        self.bedTargetTemperature.setText(str(int(temperature['bedTarget'])))  # + unichr(176))
+        except:
+            pass
 
         # updates the progress bar on the change filament screen
         if self.changeFilamentHeatingFlag:
@@ -1790,6 +1890,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.changeFilamentButton.setDisabled(True)
             self.menuCalibrateButton.setDisabled(True)
             self.menuPrintButton.setDisabled(True)
+            self.doorLockButton.setDisabled(False)
             # if not self.__timelapse_enabled:
             #     octopiclient.cancelPrint()
             #     self.coolDownAction()
@@ -1801,6 +1902,8 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.changeFilamentButton.setDisabled(False)
             self.menuCalibrateButton.setDisabled(True)
             self.menuPrintButton.setDisabled(True)
+            self.doorLockButton.setDisabled(False)
+
 
         else:
             self.stopButton.setDisabled(True)
@@ -1809,6 +1912,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.changeFilamentButton.setDisabled(False)
             self.menuCalibrateButton.setDisabled(False)
             self.menuPrintButton.setDisabled(False)
+            self.doorLockButton.setDisabled(True)
 
     ''' ++++++++++++++++++++++++++++Active Extruder/Tool Change++++++++++++++++++++++++ '''
 
@@ -2031,6 +2135,8 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         self.toolOffsetYDoubleSpinBox.setValue(float(self.toolOffsetY))
         self.toolOffsetZDoubleSpinBox.setValue(float(self.toolOffsetZ))
 
+	
+
     def quickStep1(self):
         '''
         Shows welcome message.
@@ -2184,12 +2290,12 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
                                overlay=True):
             os.system('sudo cp -f config/dhcpcd.conf /etc/dhcpcd.conf')
             os.system('sudo cp -f config/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf')
-            os.system('sudo rm -rf /home/biqu/.octoprint/users.yaml')
-            os.system('sudo cp -f config/users.yaml /home/biqu/.octoprint/users.yaml')
-            os.system('sudo rm -rf /home/biqu/.octoprint/printerProfiles/*')
-            os.system('sudo rm -rf /home/biqu/.octoprint/scripts/gcode')
-            os.system('sudo rm -rf /home/biqu/.octoprint/print_restore.json')
-            os.system('sudo cp -f config/config.yaml /home/biqu/.octoprint/config.yaml')
+            os.system('sudo rm -rf /home/pi/.octoprint/users.yaml')
+            os.system('sudo cp -f config/users.yaml /home/pi/.octoprint/users.yaml')
+            os.system('sudo rm -rf /home/pi/.octoprint/printerProfiles/*')
+            os.system('sudo rm -rf /home/pi/.octoprint/scripts/gcode')
+            os.system('sudo rm -rf /home/pi/.octoprint/print_restore.json')
+            os.system('sudo cp -f config/config.yaml /home/pi/.octoprint/config.yaml')
             # os.system('sudo rm -rf /home/pi/.fw_logo.dat')
             self.tellAndReboot("Settings restored. Rebooting...")
 
@@ -2213,6 +2319,10 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             return True
         return False
 
+								 
+												 
+																							
+										  
 
     def pairPhoneApp(self):
         if getIP(ThreadRestartNetworking.ETH) is not None:
