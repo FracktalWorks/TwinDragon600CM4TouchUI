@@ -176,7 +176,7 @@ QStatusBar::item {
 background-color: rgb(40, 40, 40);</string>
     </property>
     <property name="currentIndex">
-     <number>17</number>
+     <number>23</number>
     </property>
     <widget class="QWidget" name="loadingPage">
      <widget class="QLabel" name="LoadingLabel">
@@ -7522,7 +7522,7 @@ QPushButton:focus {
        <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>Homing In progress. Wait for all moves to finish, make sure nozzle tip is clean and then click Next</string>
+       <string>We start by calibrating the print bed's level. A perfectly leveled bed is essential to get reliable printing performance.</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -7651,7 +7651,7 @@ QPushButton:focus {
        <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>Loosen or tighten the front right leveling screw untill leveling light just turns solid RED.</string>
+       <string>Tighten the front left screw, and measure the height with the help of an A4 sheet of Paper as a measuring guage</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -7780,7 +7780,7 @@ QPushButton:focus {
        <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>Repeat the same using the front left leveling screw</string>
+       <string>Repeat the same using the front right leveling screw</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -10446,7 +10446,7 @@ QTabBar:focus {
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <property name="iconSize">
        <size>

@@ -8206,8 +8206,8 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.mainApplication)
 
         self.retranslateUi(MainWindow)
-        self.stackedWidget.setCurrentIndex(17)
-        self.controlTabWidget.setCurrentIndex(3)
+        self.stackedWidget.setCurrentIndex(23)
+        self.controlTabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -8335,13 +8335,13 @@ class Ui_MainWindow(object):
         self.toolOffsetLabel_2.setText(_translate("MainWindow", "Z offset distance for extruder E1:"))
         self.quickStep1CancelButton.setText(_translate("MainWindow", "Cancel"))
         self.quickStep1NextButton.setText(_translate("MainWindow", "Next"))
-        self.calibrateLabel_6.setText(_translate("MainWindow", "Homing In progress. Wait for all moves to finish, make sure nozzle tip is clean and then click Next"))
+        self.calibrateLabel_6.setText(_translate("MainWindow", "We start by calibrating the print bed\'s level. A perfectly leveled bed is essential to get reliable printing performance."))
         self.quickStep2NextButton.setText(_translate("MainWindow", "Next"))
         self.quickStep2CancelButton.setText(_translate("MainWindow", "Cancel"))
-        self.calibrateLabel_7.setText(_translate("MainWindow", "Loosen or tighten the front right leveling screw untill leveling light just turns solid RED."))
+        self.calibrateLabel_7.setText(_translate("MainWindow", "Tighten the front left screw, and measure the height with the help of an A4 sheet of Paper as a measuring guage"))
         self.quickStep3NextButton.setText(_translate("MainWindow", "Next"))
         self.quickStep3CancelButton.setText(_translate("MainWindow", "Cancel"))
-        self.calibrateLabel_10.setText(_translate("MainWindow", "Repeat the same using the front left leveling screw"))
+        self.calibrateLabel_10.setText(_translate("MainWindow", "Repeat the same using the front right leveling screw"))
         self.quickStep4NextButton.setText(_translate("MainWindow", "Next"))
         self.quickStep4CancelButton.setText(_translate("MainWindow", "Cancel"))
         self.calibrateLabel_12.setText(_translate("MainWindow", "Repeat the same using the back leveling screw"))

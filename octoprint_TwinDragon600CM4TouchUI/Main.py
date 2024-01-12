@@ -851,8 +851,8 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         # requests.get('http://{}/plugin/Julia2018FilamentSensor/toggle'.format(ip), headers=headers)   # , data=payload)
         icon = 'filamentSensorOn' if self.toggleFilamentSensorButton.isChecked() else 'filamentSensorOff'
         self.toggleFilamentSensorButton.setIcon(QtGui.QIcon(_fromUtf8("templates/img/" + icon)))
-        octopiclient.gcode(command="SET_FILAMENT_SENSOR SENSOR=filament_sensor0 ENABLE={}".format(int(self.toggleFilamentSensorButton.isChecked())))
-        octopiclient.gcode(command="SET_FILAMENT_SENSOR SENSOR=filament_sensor1 ENABLE={}".format(int(self.toggleFilamentSensorButton.isChecked())))
+        octopiclient.gcode(command="SET_FILAMENT_SENSOR SENSOR=SFS_T0 ENABLE={}".format(int(self.toggleFilamentSensorButton.isChecked())))
+        octopiclient.gcode(command="SET_FILAMENT_SENSOR SENSOR=SFS_T1 ENABLE={}".format(int(self.toggleFilamentSensorButton.isChecked())))
     def filamentSensorHandler(self, data):
         try:
             # sensor_enabled = False
@@ -865,20 +865,20 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             icon = 'filamentSensorOn' if self.toggleFilamentSensorButton.isChecked() else 'filamentSensorOff'
             self.toggleFilamentSensorButton.setIcon(QtGui.QIcon(_fromUtf8("templates/img/" + icon)))
 
-            if not self.toggleFilamentSensorButton.isChecked():
+            if not self.toggleFilamentSensorButton.isChecked():  
                 return
 
             triggered_extruder0 = False
             triggered_extruder1 = False
             # triggered_door = False
             # pause_print = False
-            triggered_door = False
-            pause_print = False
+            # triggered_door = False
+            # pause_print = False
 
-            if 'extruder0' in data:
+            if '0' in data:
                 triggered_extruder0 = True
 
-            if 'extruder1' in data:
+            if '1' in data:
                 triggered_extruder1 = True
 
             # if 'door' in data:
@@ -886,19 +886,21 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             # if 'pause_print' in data:
             #     pause_print = data["pause_print"]
                 
-            if 'door' in data:
-                triggered_door = data["door"] == 0
-            if 'pause_print' in data:
-                pause_print = data["pause_print"]
+            # if 'door' in data:
+            #     triggered_door = data["door"] == 0
+            # if 'pause_print' in data:
+            #     pause_print = data["pause_print"]
 
             if triggered_extruder0 and self.stackedWidget.currentWidget() not in [self.changeFilamentPage, self.changeFilamentProgressPage,
                                     self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage]:
-                if dialog.WarningOk(self, "Filament outage in Extruder 0"):
+                octopiclient.gcode(command='PAUSE')
+                if dialog.WarningOk(self, "Filament outage in Extruder 0. Print paused"):
                     pass
 
             if triggered_extruder1 and self.stackedWidget.currentWidget() not in [self.changeFilamentPage, self.changeFilamentProgressPage,
                                     self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage]:
-                if dialog.WarningOk(self, "Filament outage in Extruder 1"):
+                octopiclient.gcode(command='PAUSE')
+                if dialog.WarningOk(self, "Filament outage in Extruder 1. Print paused"):
                     pass
 
             # if triggered_door:
@@ -914,25 +916,25 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             #     else:
             #         if dialog.WarningOk(self, "Door opened"):
             #             return
-            if triggered_door:
-                if self.printerStatusText == "Printing":
-                    no_pause_pages = [self.controlPage, self.changeFilamentPage, self.changeFilamentProgressPage,
-                                      self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage,]
-                    if not pause_print or self.stackedWidget.currentWidget() in no_pause_pages:
-                        if dialog.WarningOk(self, "Door opened"):
-                            return
-                    octopiclient.pausePrint()
-                    if dialog.WarningOk(self, "Door opened. Print paused.", overlay=True):
-                        return
-                else:
-                    if dialog.WarningOk(self, "Door opened"):
-                        return
+            # if triggered_door:
+            #     if self.printerStatusText == "Printing":
+            #         no_pause_pages = [self.controlPage, self.changeFilamentPage, self.changeFilamentProgressPage,
+            #                           self.changeFilamentExtrudePage, self.changeFilamentRetractPage,self.changeFilamentLoadPage,]
+            #         if not pause_print or self.stackedWidget.currentWidget() in no_pause_pages:
+            #             if dialog.WarningOk(self, "Door opened"):
+            #                 return
+            #         octopiclient.pausePrint()
+            #         if dialog.WarningOk(self, "Door opened. Print paused.", overlay=True):
+            #             return
+            #     else:
+            #         if dialog.WarningOk(self, "Door opened"):
+            #             return
         except Exception as e:
             print(e)
 
 																			  
 
-''' +++++++++++++++++++++++++++  +++++++++++++++++++++++++++++++++++++ '''
+    ''' +++++++++++++++++++++++++++ Door Lock +++++++++++++++++++++++++++++++++++++ '''
 
     def doorLock(self):
         '''
@@ -1517,6 +1519,11 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             time.sleep(3)
 
     def changeFilament(self):
+        time.sleep(1)
+        if self.printerStatusText not in ["Printing","Paused"]:
+            octopiclient.gcode("G28")
+            octopiclient.gcode("G1 X300 Y0 F10000")
+
         self.stackedWidget.setCurrentWidget(self.changeFilamentPage)
         self.changeFilamentComboBox.clear()
         self.changeFilamentComboBox.addItems(filaments.keys())
@@ -1924,9 +1931,15 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         if self.toolToggleChangeFilamentButton.isChecked():
             self.setActiveExtruder(1)
             octopiclient.selectTool(1)
+            time.sleep(1)
+            if self.printerStatusText not in ["Printing","Paused"]:
+                octopiclient.gcode("G1 X300 Y0 F10000")
         else:
             self.setActiveExtruder(0)
             octopiclient.selectTool(0)
+            time.sleep(1)
+            if self.printerStatusText not in ["Printing","Paused"]:
+                octopiclient.gcode("G1 X300 Y0 F10000")
 
     def selectToolMotion(self):
         '''
@@ -2055,10 +2068,12 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         #fuck you past vijay for not cleaning this up
         try:
             if self.setNewToolZOffsetFromCurrentZBool:
-                newToolOffsetZ = float(self.toolOffsetZ) - float(self.currentZPosition)
+                print(self.toolOffsetZ)
+                print(self.currentZPosition)
+                newToolOffsetZ = (float(self.toolOffsetZ) + float(self.currentZPosition))
                 octopiclient.gcode(command='M218 T1 Z{}'.format(newToolOffsetZ))  # restore eeprom settings to get Z home offset, mesh bed leveling back
                 self.setNewToolZOffsetFromCurrentZBool =False
-                octopiclient.gcode(command='M500')  # store eeprom settings to get Z home offset, mesh bed leveling back
+                octopiclient.gcode(command='SAVE_CONFIG')  # store eeprom settings to get Z home offset, mesh bed leveling back
         except Exception as e:
                     print("error: " + str(e))
 
@@ -2153,6 +2168,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         octopiclient.gcode(command='M420 S0')  # Dissable mesh bed leveling for good measure
         self.stackedWidget.setCurrentWidget(self.quickStep1Page)
         octopiclient.home(['x', 'y', 'z'])
+        octopiclient.gcode(command='T0')
         octopiclient.jog(x=40, y=40, absolute=True, speed=2000)
 
     def quickStep2(self):
@@ -2161,7 +2177,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         :return:
         '''
         self.stackedWidget.setCurrentWidget(self.quickStep2Page)
-        octopiclient.jog(x=calibrationPosition['X1'], y=calibrationPosition['Y1'], absolute=True, speed=2000)
+        octopiclient.jog(x=calibrationPosition['X1'], y=calibrationPosition['Y1'], absolute=True, speed=10000)
         octopiclient.jog(z=0, absolute=True, speed=1500)
 
     def quickStep3(self):
@@ -2170,7 +2186,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         '''
         self.stackedWidget.setCurrentWidget(self.quickStep3Page)
         octopiclient.jog(z=10, absolute=True, speed=1500)
-        octopiclient.jog(x=calibrationPosition['X2'], y=calibrationPosition['Y2'], absolute=True, speed=2000)
+        octopiclient.jog(x=calibrationPosition['X2'], y=calibrationPosition['Y2'], absolute=True, speed=10000)
         octopiclient.jog(z=0, absolute=True, speed=1500)
 
     def quickStep4(self):
@@ -2181,7 +2197,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
         # sent twice for some reason
         self.stackedWidget.setCurrentWidget(self.quickStep4Page)
         octopiclient.jog(z=10, absolute=True, speed=1500)
-        octopiclient.jog(x=calibrationPosition['X3'], y=calibrationPosition['Y3'], absolute=True, speed=2000)
+        octopiclient.jog(x=calibrationPosition['X3'], y=calibrationPosition['Y3'], absolute=True, speed=10000)
         octopiclient.jog(z=0, absolute=True, speed=1500)
 
     # def quickStep5(self):
@@ -2197,7 +2213,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             self.toolZOffsetLabel.setText("Move the bed up or down to the First Nozzle , testing height using paper")
             self.stackedWidget.setCurrentWidget(self.nozzleHeightStep1Page)
             octopiclient.jog(z=10, absolute=True, speed=1500)
-            octopiclient.jog(x=calibrationPosition['X4'], y=calibrationPosition['Y4'], absolute=True, speed=2000)
+            octopiclient.jog(x=calibrationPosition['X4'], y=calibrationPosition['Y4'], absolute=True, speed=10000)
             octopiclient.jog(z=1, absolute=True, speed=1500)
             self.toolZOffsetCaliberationPageCount = 1
         elif self.toolZOffsetCaliberationPageCount == 1:
@@ -2205,7 +2221,7 @@ class MainUiClass(QtWidgets.QMainWindow, mainGUI.Ui_MainWindow):
             octopiclient.gcode(command='G92 Z0')#set the current Z position to zero
             octopiclient.jog(z=1, absolute=True, speed=1500)
             octopiclient.gcode(command='T1')
-            octopiclient.jog(x=calibrationPosition['X4'], y=calibrationPosition['Y4'], absolute=True, speed=2000)
+            octopiclient.jog(x=calibrationPosition['X4'], y=calibrationPosition['Y4'], absolute=True, speed=10000)
             self.toolZOffsetCaliberationPageCount = 2
         else:
             self.doneStep()
@@ -2446,8 +2462,8 @@ class QtWebsocket(QtCore.QThread):
         if "current" in data:
             if data["current"]["messages"]:
                 for item in data["current"]["messages"]:
-                    if 'Filament runout' in item:
-                        self.filament_sensor_triggered_signal.emit(item[item.index('Filament runout') + 16:].split(' ', 1)[0])
+                    if 'Filament Runout' in item: # "Filament Runout on T0/T1"
+                        self.filament_sensor_triggered_signal.emit(item[item.index('T') + 1:].split(' ', 1)[0])
                     if 'M206' in item: #response to M503, send current Z offset value
                         self.z_home_offset_signal.emit(item[item.index('Z') + 1:].split(' ', 1)[0])
                     # if 'Count' in item:  # gets the current Z value, uses it to set Z offset
