@@ -1,5 +1,5 @@
 include README.md
-recursive-include octoprint_TwinDragon600TouchUI/templates *
-recursive-include octoprint_TwinDragon600TouchUI/config *
+recursive-include octoprint_TwinDragon600CM4TouchUI/templates *
+recursive-include octoprint_TwinDragon600CM4TouchUI/config *
 include versioneer.py
-include octoprint_TwinDragon600TouchUI/_version.py
+include octoprint_TwinDragon600CM4TouchUI/_version.py
