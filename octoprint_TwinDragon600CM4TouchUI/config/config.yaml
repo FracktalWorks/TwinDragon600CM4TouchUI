@@ -1,33 +1,36 @@
 accessControl:
-  autologinAs: admin
-  autologinLocal: true
-  localNetworks:
-  - 127.0.0.0/8
-  - 192.168.0.0/24
-  - 192.168.1.0/24
+  salt: fUFvr6Z53jUp6yN4FwNzG2ChKvWSXI6m
 api:
   allowCrossOrigin: true
   key: B508534ED20348F090B4D0AD637D3660
-appearance:
-  name: Twin Dragon 600
+feature:
+  modelSizeDetection: false
 plugins:
+  Julia2018PrintRestore:
+    _config_version: 2
   announcements:
     _config_version: 1
     channels:
       _blog:
-        read_until: 1691060700
+        read_until: 1702886400
       _important:
-        read_until: 1521111600
+        read_until: 1698310200
       _octopi:
         read_until: 1684929600
       _plugins:
-        read_until: 1692748800
+        read_until: 1705881600
       _releases:
-        read_until: 1689678900
+        read_until: 1696862700
   discovery:
-    upnpUuid: 888a871c-079d-428d-9d51-6bec46da048d
+    upnpUuid: c86719af-3109-4af6-bdd6-17da5e7041b5
   errortracking:
-    unique_id: 304746e3-bdf4-4d26-89ac-d4889b6b6e3c
+    unique_id: 91c6fa42-eae0-4e0b-8fc6-d7ea1c81cdc6
+  firmwareupdater:
+    _config_version: 3
+    _selected_profile: 0
+    profiles:
+    - _id: 0
+      _name: Default
   gcodeviewer:
     _config_version: 1
   klipper:
@@ -40,7 +43,7 @@ plugins:
     _config_version: 9
   tracking:
     enabled: true
-    unique_id: e471d667-5165-4507-96b7-612d3ebeb5d5
+    unique_id: 70915093-216a-4992-8eb3-a40d9d178c27
   virtual_printer:
     _config_version: 1
 printerProfiles:
@@ -53,24 +56,21 @@ serial:
   disconnectOnErrors: false
   ignoreErrorsFromFirmware: true
   port: /tmp/printer
-  timeout:
-    communication: 60.0
-    communicationBusy: 10.0
-    connection: 30.0
 server:
   commands:
-    serverRestartCommand: sudo service octoprint restart
-    systemRestartCommand: sudo reboot now
+    serverRestartCommand: sudo reboot now
+    systemRestartCommand: sudo service octoprint restart
     systemShutdownCommand: sudo shutdown
   firstRun: false
   onlineCheck:
     enabled: true
   pluginBlacklist:
     enabled: true
-  secretKey: elyHYxDKQTwpDSko8ah24qV72ImN977G
+  secretKey: 8ed0Bqec8dNsQC2PRoqhCF0G4lPhdXS8
   seenWizards:
     backup: null
     corewizard: 4
+    tracking: null
 temperature:
   profiles:
   - bed: 100
@@ -81,3 +81,7 @@ temperature:
     chamber: null
     extruder: 180
     name: PLA
+webcam:
+  ffmpeg: /usr/bin/ffmpeg
+  snapshot: http://127.0.0.1:8080/?action=snapshot
+  stream: /webcam/?action=stream
