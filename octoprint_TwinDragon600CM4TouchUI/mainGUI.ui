@@ -176,7 +176,7 @@ QStatusBar::item {
 background-color: rgb(40, 40, 40);</string>
     </property>
     <property name="currentIndex">
-     <number>23</number>
+     <number>34</number>
     </property>
     <widget class="QWidget" name="loadingPage">
      <widget class="QLabel" name="LoadingLabel">
@@ -14254,7 +14254,7 @@ QPushButton:focus {
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>100</y>
+        <y>80</y>
         <width>831</width>
         <height>31</height>
        </rect>
@@ -14279,9 +14279,9 @@ background-color: rgba(255, 255, 255, 0);</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>160</y>
+        <y>240</y>
         <width>761</width>
-        <height>161</height>
+        <height>101</height>
        </rect>
       </property>
       <property name="font">
@@ -14297,7 +14297,35 @@ background-color: rgba(255, 255, 255, 0);</string>
 background-color: rgba(255, 255, 255, 0);</string>
       </property>
       <property name="text">
-       <string>Incase Filament is not getting extruded even after waiting for 1-2 minues, Check extruders at the filament chamber as well as on the carriage for issues.</string>
+       <string>Incase Filament is not getting extruded even after waiting for 2-3 minutes, Check extruders at the filament chamber as well as on the carriage for issues.</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="feedFilamentlabel_8">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>140</y>
+        <width>761</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Gotham Light</family>
+        <pointsize>14</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);
+background-color: rgba(255, 255, 255, 0);</string>
+      </property>
+      <property name="text">
+       <string>Wait for approximately 2-3 minutes for the filament to reach the extruder on the carriage. </string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -14308,7 +14336,7 @@ background-color: rgba(255, 255, 255, 0);</string>
      <widget class="QLabel" name="feedFilamentlabel_3">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>100</y>
         <width>511</width>
         <height>31</height>
@@ -14403,6 +14431,62 @@ background-color: rgba(255, 255, 255, 0);</string>
       </property>
       <property name="text">
        <string>Retract Filament From Extruder</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="feedFilamentlabel_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>260</y>
+        <width>761</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Gotham Light</family>
+        <pointsize>14</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);
+background-color: rgba(255, 255, 255, 0);</string>
+      </property>
+      <property name="text">
+       <string>Incase Filament is not getting retracted even after waiting for 2-3 minutes, Check the external extruders as well as on the carriage extruders for issues.</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="feedFilamentlabel_9">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>761</width>
+        <height>131</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Gotham Light</family>
+        <pointsize>14</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);
+background-color: rgba(255, 255, 255, 0);</string>
+      </property>
+      <property name="text">
+       <string>Wait for approximately 2-3 minutes for the filament to get retracted from the carriage extruder as well as the external extruder</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
       </property>
      </widget>
     </widget>
